@@ -75,6 +75,27 @@ flask --app mono_webapp/wsgi.py run
 
 Las tablas se crean vía los modelos de SQLAlchemy; no hay migraciones (Alembic) configuradas todavía.
 
+## Crear un usuario administrador
+
+No hay seed ni comando de creación de admin. `password_hash` se genera con `werkzeug.security.generate_password_hash` (scrypt, salteado) — no se puede escribir a mano, hay que generarlo:
+
+```bash
+python -c "from werkzeug.security import generate_password_hash; print(generate_password_hash('TU_PASSWORD_AQUI'))"
+```
+
+y luego insertar el usuario directamente en la base de datos con el hash generado:
+
+```sql
+INSERT INTO users (full_name, email, password_hash, role, created_at)
+VALUES (
+    'Admin Principal',
+    'admin@example.com',
+    '<hash generado en el paso anterior>',
+    'admin',
+    now()
+);
+```
+
 ## Licencia
 
 MIT — ver [LICENSE](LICENSE).
