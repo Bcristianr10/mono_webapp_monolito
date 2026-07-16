@@ -6,6 +6,7 @@ from flask_login import LoginManager, current_user
 from app.database import db
 from app.modules.courses.routes import courses_bp
 from app.modules.enrollments.routes import enrollments_bp
+from app.modules.reports.routes import reports_bp
 from app.modules.users.routes import users_bp
 from app.modules.users.services import get_user_by_id
 
@@ -34,6 +35,7 @@ def create_app():
     app.register_blueprint(users_bp)
     app.register_blueprint(courses_bp)
     app.register_blueprint(enrollments_bp)
+    app.register_blueprint(reports_bp)
 
     @app.route("/")
     def index():

@@ -1,6 +1,6 @@
 from app.database import db
 from app.modules.courses import services as courses_services
-from app.modules.enrollments.models import Enrollment
+from app.modules.enrollments.models import Enrollment, EnrollmentStatusHistory
 
 
 class AlreadyEnrolledError(Exception):
@@ -29,6 +29,10 @@ def get_any_enrollment(user_id: int, course_id: int) -> Enrollment | None:
     ).scalar_one_or_none()
 
 
+def _record_status_change(enrollment: Enrollment, status: str) -> None:
+    db.session.add(EnrollmentStatusHistory(enrollment_id=enrollment.id, status=status))
+
+
 def enroll_user(user_id: int, course_id: int) -> Enrollment:
     course = courses_services.get_course(course_id)
     if course is None or not course.is_active:
@@ -44,11 +48,14 @@ def enroll_user(user_id: int, course_id: int) -> Enrollment:
 
     if existing is not None:
         existing.status = "active"
+        _record_status_change(existing, "active")
         db.session.commit()
         return existing
 
     enrollment = Enrollment(user_id=user_id, course_id=course_id, status="active")
     db.session.add(enrollment)
+    db.session.flush()
+    _record_status_change(enrollment, "active")
     db.session.commit()
     return enrollment
 
@@ -58,6 +65,7 @@ def cancel_enrollment(user_id: int, course_id: int) -> None:
     if enrollment is None:
         raise ValueError("No existe una inscripción activa para cancelar")
     enrollment.status = "cancelled"
+    _record_status_change(enrollment, "cancelled")
     db.session.commit()
 
 
@@ -65,6 +73,7 @@ def cancel_all_for_course(course_id: int) -> None:
     enrollments = list_enrollments_for_course(course_id)
     for enrollment in enrollments:
         enrollment.status = "cancelled"
+        _record_status_change(enrollment, "cancelled")
     db.session.commit()
 
 

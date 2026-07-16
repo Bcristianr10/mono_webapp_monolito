@@ -17,3 +17,20 @@ class Enrollment(db.Model):
 
     def __repr__(self):
         return f"<Enrollment user={self.user_id} course={self.course_id} status={self.status}>"
+
+
+class EnrollmentStatusHistory(db.Model):
+    __tablename__ = "enrollment_status_history"
+    __table_args__ = (
+        db.Index("ix_enrollment_status_history_status_changed_at", "status", "changed_at"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    enrollment_id = db.Column(
+        db.Integer, db.ForeignKey("enrollments.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    status = db.Column(db.String(20), nullable=False)
+    changed_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+
+    def __repr__(self):
+        return f"<EnrollmentStatusHistory enrollment={self.enrollment_id} status={self.status}>"
